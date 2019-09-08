@@ -24,12 +24,12 @@ typedef struct _addlist {
 	char addr[INBUF_SIZE];		// 住所
 	char numbr[INBUF_SIZE];		// 電話番号
 	struct _addlist *next;
-} TelephoneDir;
+} PersonNode;
 
-TelephoneDir *top=NULL;
+PersonNode *top=NULL;
 
 // 文字列入力用関数
-void get_str(char *s,unsigned size) {
+void Input(char *s,unsigned size) {
 	fgets(s,size,stdin);
 	while(*s) {
 		if(*s=='\n') *s='\0';
@@ -38,7 +38,7 @@ void get_str(char *s,unsigned size) {
 }
 
 // 文字列中の空文字をアンダーバーに変換
-void conv_spacetobar(char *s) {
+void Sp2underbar(char *s) {
 	while(*s) {
 		if(isspace(*s)) *s='_';
 		s++;
@@ -51,7 +51,7 @@ Menu SelectMenu(void) {
 	char buff[INBUF_SIZE];
 	do {
 		printf("(1)追加 (2)削除 (3)検索 (4)名前の昇順に整頓 (5)表示 (6)デバッグ (7)初期化 (0)終了 --> ");
-		get_str(buff,INBUF_SIZE-1);
+		Input(buff,INBUF_SIZE-1);
 		ch=buff[0];
 	}while((ch<EXIT+'0'||ch>=INVALID+'0')||strlen(buff)!=1);
 
@@ -59,11 +59,11 @@ Menu SelectMenu(void) {
 }
 
 // 新規ノードを確保
-TelephoneDir *NewNode(void) {
-	return calloc(1,sizeof(TelephoneDir));
+PersonNode *NewNode(void) {
+	return calloc(1,sizeof(PersonNode));
 }
 
-void RemoveNode(TelephoneDir *p) {
+void RemoveNode(PersonNode *p) {
 	free(p);
 }
 
@@ -74,7 +74,7 @@ int SwitchData(void) {
 	puts("着目するデータ");
 	do {
 		printf("(1)名前  (2)住所  (3)電話番号 --> ");
-		get_str(buff,INBUF_SIZE-1);
+		Input(buff,INBUF_SIZE-1);
 		c=buff[0];
 	}while(c<'1'||c>'3'||strlen(buff)!=1);
 	return c-'0';
@@ -91,7 +91,7 @@ int ReadData(void) {
 	FILE *fp;
 	int i;
 	char _dbuff[130];
-	TelephoneDir Dummy,*newp,*crnt=top;
+	PersonNode Dummy,*newp,*crnt=top;
 	Dummy.next=NULL;
 
 	if((fp=fopen(filename,"r"))==NULL) {
@@ -125,8 +125,8 @@ int ReadData(void) {
 
 // データを探索
 // 見つかれば見つかったノードへのポインタを返し、無かったらNULLを返す
-TelephoneDir *SearchData(const char *s,int sw) {
-	TelephoneDir *crnt=top;
+PersonNode *SearchData(const char *s,int sw) {
+	PersonNode *crnt=top;
 	switch(sw) {
 		case SearchName:		// 名前で探索
 		while(crnt!=NULL) {
@@ -151,10 +151,10 @@ TelephoneDir *SearchData(const char *s,int sw) {
 }
 
 // リストを分割
-TelephoneDir *DivideList(TelephoneDir *h) {
-	TelephoneDir *a=h;
-	TelephoneDir *b=h->next;
-	TelephoneDir *p;
+PersonNode *DivideList(PersonNode *h) {
+	PersonNode *a=h;
+	PersonNode *b=h->next;
+	PersonNode *p;
 
 	if(h==NULL||h->next==NULL) return h;
 
@@ -171,10 +171,10 @@ TelephoneDir *DivideList(TelephoneDir *h) {
 }
 
 // 2つのリストを結合
-static TelephoneDir *MergeList(TelephoneDir *a,TelephoneDir *b) {
-	static TelephoneDir Dummy;
-	TelephoneDir *head=&Dummy;
-	TelephoneDir *p=head;
+static PersonNode *MergeList(PersonNode *a,PersonNode *b) {
+	static PersonNode Dummy;
+	PersonNode *head=&Dummy;
+	PersonNode *p=head;
 
 	while(a&&b) {
 		if(strcmp(a->name,b->name)<0) {
@@ -195,9 +195,9 @@ static TelephoneDir *MergeList(TelephoneDir *a,TelephoneDir *b) {
 }
 
 // 配列をソートする(マージソート)
-static TelephoneDir *MergeSort(TelephoneDir *h) {
-	TelephoneDir *a=h;
-	TelephoneDir *b=DivideList(h);
+static PersonNode *MergeSort(PersonNode *h) {
+	PersonNode *a=h;
+	PersonNode *b=DivideList(h);
 
 	return MergeList(MergeSort(a),MergeSort(b));
 }
@@ -209,18 +209,18 @@ void SortData(void) {
 // ファイルにデータを追加する
 int AddData(void) {
 	int i;
-	TelephoneDir Dummy,*crnt=top;
+	PersonNode Dummy,*crnt=top;
 	Dummy.next=NULL;
 	puts("データを追加");
-	printf("名前 --> ");	get_str(Dummy.name,INBUF_SIZE-1);
-	printf("住所 --> ");	get_str(Dummy.addr,INBUF_SIZE-1);
-	printf("電話番号 --> ");	get_str(Dummy.numbr,INBUF_SIZE-1);
-	conv_spacetobar(Dummy.name);
-	conv_spacetobar(Dummy.addr);
-	conv_spacetobar(Dummy.numbr);
+	printf("名前 --> ");	Input(Dummy.name,INBUF_SIZE-1);
+	printf("住所 --> ");	Input(Dummy.addr,INBUF_SIZE-1);
+	printf("電話番号 --> ");	Input(Dummy.numbr,INBUF_SIZE-1);
+	Sp2underbar(Dummy.name);
+	Sp2underbar(Dummy.addr);
+	Sp2underbar(Dummy.numbr);
 	if(SearchData(Dummy.name,SearchName)==NULL&&
 		SearchData(Dummy.numbr,SearchNumber)==NULL) {	// 重複していない
-		TelephoneDir *newp;
+		PersonNode *newp;
 		if((newp=NewNode())==NULL) {
 			printf("\aメモリ割り当てが出来ません.\n");
 			exit(1);
@@ -245,7 +245,7 @@ int AddData(void) {
 int DeleteData(void) {
 	int i;
 	int sw;
-	TelephoneDir Dummy,*crnt=top,*res;
+	PersonNode Dummy,*crnt=top,*res;
 	Dummy.next=NULL;
 	if(crnt==NULL) {
 		puts("\aデータが無い.");
@@ -254,18 +254,18 @@ int DeleteData(void) {
 	sw=SwitchData();
 	switch(sw) {
 		case SearchName:
-		printf("名前 --> ");	get_str(Dummy.name,INBUF_SIZE-1);
-		conv_spacetobar(Dummy.name);
+		printf("名前 --> ");	Input(Dummy.name,INBUF_SIZE-1);
+		Sp2underbar(Dummy.name);
 		res=SearchData(Dummy.name,SearchName);
 		break;
 		case SearchAddress:
-		printf("住所 --> ");	get_str(Dummy.addr,INBUF_SIZE-1);
-		conv_spacetobar(Dummy.addr);
+		printf("住所 --> ");	Input(Dummy.addr,INBUF_SIZE-1);
+		Sp2underbar(Dummy.addr);
 		res=SearchData(Dummy.addr,SearchAddress);
 		break;
 		case SearchNumber:
-		printf("電話番号 --> ");	get_str(Dummy.numbr,INBUF_SIZE-1);
-		conv_spacetobar(Dummy.numbr);
+		printf("電話番号 --> ");	Input(Dummy.numbr,INBUF_SIZE-1);
+		Sp2underbar(Dummy.numbr);
 		res=SearchData(Dummy.numbr,SearchNumber);
 		break;
 	}
@@ -274,7 +274,7 @@ int DeleteData(void) {
 		return 1;
 	}
 	else {		// 見つかった?
-		TelephoneDir *prv=NULL;
+		PersonNode *prv=NULL;
 		printf("データ %s %s %sを削除.\n",res->name,res->addr,res->numbr);
 		while(strcmp(crnt->name,res->name)&&crnt!=NULL) {
 			prv=crnt;
@@ -295,7 +295,7 @@ int DeleteData(void) {
 // ファイルに変更内容を反映
 void WriteData(void) {
 	FILE *fp;
-	TelephoneDir *crnt=top;
+	PersonNode *crnt=top;
 
 	if((fp=fopen(filename,"w"))==NULL) {
 		puts("\aファイルをオープンできない.");
@@ -311,7 +311,7 @@ void WriteData(void) {
 
 // 確保されているノードを解放
 void ClearList(void) {
-	TelephoneDir *tmp,*crnt=top;
+	PersonNode *tmp,*crnt=top;
 	while(crnt!=NULL) {
 		tmp=crnt;
 		crnt=crnt->next;
@@ -338,7 +338,7 @@ void MakeFile(void) {
 // データ出力
 void PrintData(void) {
 	int i=0;
-	TelephoneDir *crnt=top;
+	PersonNode *crnt=top;
 	puts("+---------+----------------------+----------------------+----------------------+");
 	printf("| Index   | Name%16s | Address%13s | Number%14s |\n","","","");
 	while(crnt!=NULL) {
@@ -351,7 +351,7 @@ void PrintData(void) {
 
 // デバッグ用
 void PrintDebug(void) {
-	TelephoneDir *crnt=top;
+	PersonNode *crnt=top;
 	while(crnt!=NULL) {
 		printf("0x%08p -> %s %s %s\n",crnt,crnt->name,crnt->addr,crnt->numbr);
 		crnt=crnt->next;
@@ -361,7 +361,7 @@ void PrintDebug(void) {
 
 int main() {
 	Menu menu;
-	TelephoneDir Dummy,*res;
+	PersonNode Dummy,*res;
 	MakeFile();
 	ReadData();
 	do {
@@ -375,18 +375,18 @@ int main() {
 			case SEARCH:
 			switch(SwitchData()) {
 				case SearchName:
-				printf("名前 --> ");	get_str(Dummy.name,INBUF_SIZE-1);
-				conv_spacetobar(Dummy.name);
+				printf("名前 --> ");	Input(Dummy.name,INBUF_SIZE-1);
+				Sp2underbar(Dummy.name);
 				res=SearchData(Dummy.name,SearchName);
 				break;
 				case SearchAddress:
-				printf("住所 --> ");	get_str(Dummy.addr,INBUF_SIZE-1);
-				conv_spacetobar(Dummy.addr);
+				printf("住所 --> ");	Input(Dummy.addr,INBUF_SIZE-1);
+				Sp2underbar(Dummy.addr);
 				res=SearchData(Dummy.addr,SearchAddress);
 				break;
 				case SearchNumber:
-				printf("電話番号 --> ");	get_str(Dummy.numbr,INBUF_SIZE-1);
-				conv_spacetobar(Dummy.numbr);
+				printf("電話番号 --> ");	Input(Dummy.numbr,INBUF_SIZE-1);
+				Sp2underbar(Dummy.numbr);
 				res=SearchData(Dummy.numbr,SearchNumber);
 				break;
 			}

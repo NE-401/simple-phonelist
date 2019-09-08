@@ -395,7 +395,7 @@ int main() {
 			break;
 			case SORTNAMEASC:
 			printf("SortData実行\n");
-			SortData();
+			// SortData();
 			break;
 			case PRINT:
 			PrintData();
